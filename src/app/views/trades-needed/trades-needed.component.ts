@@ -56,6 +56,8 @@ export class TradesNeededComponent implements OnInit {
   }
 
   refreshTradesNeeded() {
+    console.log("Wealthica Positions:");
+    console.log(this.positions);
     this.resetVariables();
     this.loading = true;
     // Needed to update loading variable when accounts are filtered
@@ -134,27 +136,24 @@ export class TradesNeededComponent implements OnInit {
       let count = 0;
 
       this.positions.forEach(position => {
-
-        if (WealthicaPosition.isCadPosition(position)) {
-          const request = new PassivSymbolRequest(position.security.symbol);
-          promises.push(this.passivService.search(request).subscribe(response => {
-            this.loadingText = 'Verifying ' + position.security.symbol + '...';
-            let symbol = position.security.symbol;
-            if (WealthicaSecurity.isCadSecurity(position)) {
-              const cadSymbol = PassivSymbol.getCadSymbolFromWealthica(symbol, response as PassivSymbol[]);
-              if (cadSymbol !== null) {
-                symbol = cadSymbol;
-              }
+        const request = new PassivSymbolRequest(position.security.symbol);
+        promises.push(this.passivService.search(request).subscribe(response => {
+          this.loadingText = 'Verifying ' + position.security.symbol + '...';
+          let symbol = position.security.symbol;
+          if (WealthicaSecurity.isCadSecurity(position)) {
+            const cadSymbol = PassivSymbol.getCadSymbolFromWealthica(symbol, response as PassivSymbol[]);
+            if (cadSymbol !== null) {
+              symbol = cadSymbol;
             }
+          }
 
-            const passivPosition = new PassivPosition(symbol, position.quantity);
-            positions.push(passivPosition);
-            count++;
-            if (count === this.positions.length) {
-              resolve(positions);
-            }
-          }));
-        }
+          const passivPosition = new PassivPosition(symbol, position.quantity);
+          positions.push(passivPosition);
+          count++;
+          if (count === this.positions.length) {
+            resolve(positions);
+          }
+        }));
       });
     });
     return positionPromise as Promise<PassivPosition[]>;
